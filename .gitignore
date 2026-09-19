@@ -1,0 +1,25 @@
+# ===== 凭据与私有数据（绝对不要提交）=====
+.env
+请求头.txt
+*.har
+
+# ===== 导出产物 =====
+exports/
+
+# ===== Python =====
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# ===== 临时探针 / 调试脚本（项目根目录下划线开头，用完即删）=====
+/_*
+
+# ===== 编辑器 / 系统 =====
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
