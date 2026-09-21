@@ -33,10 +33,12 @@ JST_AUTHORIZE_CO_ID=14975440
 首次登录并验证：
 
 ```bash
-uv run jst-export login      # 登录并把 Cookie 写入 .env
-uv run jst-export check      # 确认 Cookie 可用
+uv run jst-export check      # 确认 .env 里的 Cookie 可用
 uv run jst-export warehouses # 列出所有分仓编码与名称
 ```
+
+`.env` 里没有 Cookie 时会自动登录一次；之后一律复用已保存的 Cookie，
+只有真的失效（被踢回登录页 / 返回 `GotoLogin`）才会重新登录，不会每次拉取都登一遍。
 
 导出一次：
 
@@ -44,6 +46,10 @@ uv run jst-export warehouses # 列出所有分仓编码与名称
 uv run jst-export run                      # 按 JST_WINDOW 规则（默认昨天）
 uv run jst-export run --window last7d      # 最近 7 天
 uv run jst-export run --start 2026-09-01 --end 2026-09-10
+
+# 临时导出别的分仓，并把仓号写进文件名，避免多仓互相覆盖
+uv run jst-export run --start 2026-09-20 --end 2026-09-21 \
+  -w 14975440 --filename-template "销售出库单_{start:%Y%m%d}_{authorize_co_id}.xlsx"
 ```
 
 常驻定时：
@@ -56,7 +62,7 @@ uv run jst-export daemon
 
 | 命令 | 作用 |
 | --- | --- |
-| `run` | 立即导出一次，可用 `--start/--end` 或 `--window` 覆盖区间 |
+| `run` | 立即导出一次，可用 `--start/--end`、`--window`、`-w/--warehouse`、`--filename-template` 覆盖配置 |
 | `daemon` | 常驻进程，按 `JST_SCHEDULE` 定时导出 |
 | `check` | 检查当前 Cookie 是否有效 |
 | `login` | 用配置的账号密码登录，刷新 `.env` 里的 Cookie |
@@ -120,7 +126,7 @@ JST_END=2026-09-10
 | `JST_MIN_INTERVAL` | `10` | 两次请求最小间隔（秒） |
 | `JST_TIMEOUT` | `120` | 单次请求超时（秒） |
 | `JST_MAX_RETRIES` | `3` | 导出重试次数 |
-| `JST_FILENAME_TEMPLATE` | `销售出库单_{start:%Y%m%d}.xlsx` | 文件名模板 |
+| `JST_FILENAME_TEMPLATE` | `销售出库单_{start:%Y%m%d}.xlsx` | 文件名模板，支持 `{start}` `{end}` `{authorize_co_id}` |
 
 ## 工作原理
 

@@ -222,7 +222,7 @@ class Exporter:
 
         self.cfg.output_dir.mkdir(parents=True, exist_ok=True)
         name = remote_name if self.cfg.keep_raw_name else self.cfg.filename_template.format(
-            start=start, end=end
+            start=start, end=end, authorize_co_id=self.cfg.authorize_co_id
         )
         path = self.cfg.output_dir / name
         path.write_bytes(content)
@@ -231,13 +231,17 @@ class Exporter:
 
     def export_with_retries(self, start: datetime, end: datetime) -> Path:
         last_error: Exception | None = None
+        relogged = False  # 同一次导出最多续登一次，避免拿新 Cookie 反复登录
         for attempt in range(1, self.cfg.max_retries + 1):
             try:
                 return self.export(start, end)
             except NotLoggedIn as exc:
                 last_error = exc
+                if relogged:
+                    raise
                 if not self._session.relogin():
                     raise
+                relogged = True
                 log.warning("Cookie 已失效并完成自动续登，重试导出")
             except Exception as exc:  # noqa: BLE001 - 网络抖动等一律重试
                 last_error = exc

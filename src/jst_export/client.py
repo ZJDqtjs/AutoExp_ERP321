@@ -38,7 +38,11 @@ class JstSession:
         self._last_request_at = 0.0
         self._lock = threading.Lock()
         self._relogin = relogin
-        if not cookie and relogin:
+        if cookie:
+            # 聚水潭 Cookie 有效期很长，优先复用上次保存的，只有失效才重新登录
+            log.info("复用已保存的 Cookie（长度 %d）", len(cookie))
+        elif relogin:
+            log.info("未找到可用 Cookie，先登录一次")
             cookie = relogin()
         self._client = httpx.Client(
             headers={

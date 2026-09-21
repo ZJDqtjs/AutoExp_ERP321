@@ -58,7 +58,16 @@ def _resolve_range(cfg: Config, args: argparse.Namespace) -> tuple[datetime, dat
 
 
 def cmd_run(cfg: Config, args: argparse.Namespace) -> int:
-    start, end = _resolve_range(cfg, args)
+    if args.warehouse:
+        cfg.authorize_co_id = args.warehouse
+    if args.filename_template:
+        cfg.filename_template = args.filename_template
+
+    try:
+        start, end = _resolve_range(cfg, args)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+
     with Exporter(cfg) as exporter:
         path = exporter.export_with_retries(start, end)
     print(f"导出完成：{path}")
@@ -171,6 +180,17 @@ def build_parser() -> argparse.ArgumentParser:
         type=_parse_window,
         metavar="RULE",
         help="按规则自动计算区间，如 yesterday / today / d2 / last7d / last24h",
+    )
+    run.add_argument(
+        "-w",
+        "--warehouse",
+        metavar="CO_ID",
+        help="指定分仓编码，覆盖 .env 里的 JST_AUTHORIZE_CO_ID",
+    )
+    run.add_argument(
+        "--filename-template",
+        metavar="TPL",
+        help="文件名模板，支持 {start} {end} {authorize_co_id}，覆盖 JST_FILENAME_TEMPLATE",
     )
 
     daemon = sub.add_parser("daemon", help="常驻进程，按 JST_SCHEDULE 定时导出")
